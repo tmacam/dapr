@@ -14,6 +14,8 @@ limitations under the License.
 package main
 
 import (
+	"github.com/dapr/dapr/pkg/components/pluggable"
+	state2 "github.com/dapr/dapr/pkg/components/pluggable/state"
 	"os"
 	"os/signal"
 	"strings"
@@ -169,6 +171,28 @@ func main() {
 	rt, err := runtime.FromFlags()
 	if err != nil {
 		log.Fatal(err)
+	}
+
+	cr := pluggable.NewComponentRegistry()
+	/*cf := pluggable.ContainerFactory{
+		Image:          "daprgomemstore",
+		Version:        "latest",
+		HostSocketRoot: "/Users/johnewart/Temp/sockets",
+	}
+	if container, err := cf.StartContainer(context.TODO()); err != nil {
+		log.Warnf("Unable to create container: %v", err)
+	} else {
+		if ss, err := state2.NewGRPCStateStore("grpcmemstore", "v1", container.HostSocketPath); err != nil {
+			log.Warnf("Unable to create memory store GRPC component: %v", err)
+		} else {
+			cr.AddStateStore(ss)
+		}
+	}*/
+	sockPath := "/Users/johnewart/Temp/sockets/memstore.sock"
+	if ss, err := state2.NewGRPCStateStore("grpcmemstore", "v1", sockPath); err != nil {
+		log.Warnf("Unable to create memory store GRPC component: %v", err)
+	} else {
+		cr.AddStateStore(ss)
 	}
 
 	err = rt.Run(
@@ -518,6 +542,9 @@ func main() {
 			http_middleware_loader.New("routerchecker", func(metadata middleware.Metadata) (http_middleware.Middleware, error) {
 				return routerchecker.NewMiddleware(log).GetHandler(metadata)
 			}),
+		),
+		runtime.WithOptions(
+			cr.GenerateRuntimeOptions()...,
 		),
 	)
 	if err != nil {

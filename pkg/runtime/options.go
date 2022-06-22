@@ -29,6 +29,21 @@ type (
 	Option func(o *runtimeOpts)
 )
 
+func (o *runtimeOpts) DumpToLog() {
+	log.Debugf("State stores (%d)", len(o.states))
+	for _, s := range o.states {
+		log.Debugf("  * %s", s.Name)
+	}
+	log.Debugf("Secret stores (%d)", len(o.secretStores))
+	for _, s := range o.secretStores {
+		log.Debugf("  * %s", s.Name)
+	}
+	log.Debugf("Pubsub subscriptions (%d)", len(o.pubsubs))
+	for _, s := range o.pubsubs {
+		log.Debugf("  * %s", s.Name)
+	}
+}
+
 // WithSecretStores adds secret store components to the runtime.
 func WithSecretStores(secretStores ...secretstores.SecretStore) Option {
 	return func(o *runtimeOpts) {
@@ -89,5 +104,15 @@ func WithHTTPMiddleware(httpMiddleware ...http.Middleware) Option {
 func WithComponentsCallback(componentsCallback ComponentsCallback) Option {
 	return func(o *runtimeOpts) {
 		o.componentsCallback = componentsCallback
+	}
+}
+
+// Apply anything that qualifies as an option ...
+func WithOptions(options ...Option) Option {
+	return func(o *runtimeOpts) {
+		for _, f := range options {
+			f(o)
+		}
+		o.DumpToLog()
 	}
 }
