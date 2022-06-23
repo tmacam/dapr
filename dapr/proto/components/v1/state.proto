@@ -17,7 +17,7 @@ package dapr.proto.components.v1;
 import "google/protobuf/empty.proto";
 import "dapr/proto/common/v1/common.proto";
 
-option go_package = "github.com/dapr/dapr/pkg/proto/components/v1;state";
+option go_package = "github.com/dapr/dapr/pkg/proto/components/v1;components";
 
 // Store service provides a gRPC interface for state store components.
 service StateStore {

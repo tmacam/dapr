@@ -64,6 +64,7 @@ require (
 
 require (
 	github.com/cenkalti/backoff v2.2.1+incompatible
+	github.com/fsouza/go-dockerclient v1.6.0
 	github.com/yourbase/narwhal v0.10.1
 )
 
@@ -166,7 +167,6 @@ require (
 	github.com/evanphx/json-patch v4.12.0+incompatible // indirect
 	github.com/fasthttp-contrib/sessions v0.0.0-20160905201309-74f6ac73d5d5 // indirect
 	github.com/fatih/color v1.10.0 // indirect
-	github.com/fsouza/go-dockerclient v1.6.0 // indirect
 	github.com/go-errors/errors v1.4.0 // indirect
 	github.com/go-kit/log v0.1.0 // indirect
 	github.com/go-logfmt/logfmt v0.5.1 // indirect

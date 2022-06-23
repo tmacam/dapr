@@ -45,6 +45,7 @@ func (f *ContainerFactory) StartContainer(ctx context.Context) (*ComponentContai
 		{
 			Source: f.HostSocketRoot,
 			Target: containerSocketRoot,
+			Type: "bind",
 		},
 	}
 
@@ -56,6 +57,7 @@ func (f *ContainerFactory) StartContainer(ctx context.Context) (*ComponentContai
 	}); err != nil {
 		return nil, fmt.Errorf("unable to create container: %v", err)
 	} else {
+		narwhal.StartContainer(ctx, client, containerID, 0)
 		return &ComponentContainer{
 			Id:             containerID,
 			HostSocketPath: hostSocketPath,
