@@ -14,14 +14,13 @@ limitations under the License.
 package main
 
 import (
-	"context"
 	"os"
 	"os/signal"
 	"strings"
 	"syscall"
-	"time"
 
 	"github.com/dapr/dapr/pkg/components/pluggable"
+	pubsub2 "github.com/dapr/dapr/pkg/components/pluggable/pubsub"
 	state2 "github.com/dapr/dapr/pkg/components/pluggable/state"
 
 	"github.com/valyala/fasthttp"
@@ -177,28 +176,54 @@ func main() {
 	}
 
 	cr := pluggable.NewComponentRegistry()
-	cf := pluggable.ContainerFactory{
-		Image:          "dapr-memstore",
-		Version:        "latest",
-		HostSocketRoot: "/home/johnewart/Temp/sockets",
-	}
-	if container, err := cf.StartContainer(context.TODO()); err != nil {
-		log.Warnf("Unable to create container: %v", err)
-	} else {
-		time.Sleep(30 * time.Second)
 
-		if ss, err := state2.NewGRPCStateStore("grpcmemstore", "v1", container.HostSocketPath); err != nil {
-			log.Warnf("Unable to create memory store GRPC component: %v", err)
-		} else {
-			cr.AddStateStore(ss)
+	/*
+		cf := pluggable.ContainerFactory{
+			Image:          "dapr-memstore",
+			Version:        "latest",
+			HostSocketRoot: "/home/johnewart/Temp/sockets",
 		}
-	}
-	/*sockPath := "/Users/johnewart/Temp/sockets/memstore.sock"
+		if container, err := cf.StartContainer(context.TODO()); err != nil {
+			log.Warnf("Unable to create container: %v", err)
+		} else {
+			time.Sleep(30 * time.Second)
+
+			if ss, err := state2.NewGRPCStateStore("grpcmemstore", "v1", container.HostSocketPath); err != nil {
+				log.Warnf("Unable to create memory store GRPC component: %v", err)
+			} else {
+				cr.AddStateStore(ss)
+			}
+		}
+
+		cf = pluggable.ContainerFactory{
+			Image:          "dapr-net-pubsub",
+			Version:        "latest",
+			HostSocketRoot: "/home/johnewart/Temp/sockets",
+		}
+		if container, err := cf.StartContainer(context.TODO()); err != nil {
+			log.Warnf("Unable to create container: %v", err)
+		} else {
+			time.Sleep(30 * time.Second)
+
+			if ps, err := pubsub2.NewGRPCPubSub("grpcpubsub", "v1", container.HostSocketPath); err != nil {
+				log.Warnf("Unable to create .NET pubsub GRPC component: %v", err)
+			} else {
+				cr.AddPubSub(ps)
+			}
+		}*/
+
+	sockPath := "/home/johnewart/Temp/sockets/dotnetcomponents.sock"
 	if ss, err := state2.NewGRPCStateStore("grpcmemstore", "v1", sockPath); err != nil {
 		log.Warnf("Unable to create memory store GRPC component: %v", err)
 	} else {
 		cr.AddStateStore(ss)
-	}*/
+	}
+
+	if ps, err := pubsub2.NewGRPCPubSub("grpcpubsub", "v1", sockPath); err != nil {
+		log.Warnf("Unable to create memory pub-sub GRPC component: %v", err)
+	} else {
+		cr.AddPubSub(ps)
+	}
 
 	err = rt.Run(
 		runtime.WithSecretStores(

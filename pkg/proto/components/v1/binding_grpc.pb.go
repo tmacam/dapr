@@ -23,7 +23,7 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type InputBindingClient interface {
-	Init(ctx context.Context, in *InitRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	Init(ctx context.Context, in *MetadataRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	Read(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*ReadResponse, error)
 	Ping(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*emptypb.Empty, error)
 }
@@ -36,7 +36,7 @@ func NewInputBindingClient(cc grpc.ClientConnInterface) InputBindingClient {
 	return &inputBindingClient{cc}
 }
 
-func (c *inputBindingClient) Init(ctx context.Context, in *InitRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+func (c *inputBindingClient) Init(ctx context.Context, in *MetadataRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
 	out := new(emptypb.Empty)
 	err := c.cc.Invoke(ctx, "/dapr.proto.components.v1.InputBinding/Init", in, out, opts...)
 	if err != nil {
@@ -67,7 +67,7 @@ func (c *inputBindingClient) Ping(ctx context.Context, in *emptypb.Empty, opts .
 // All implementations should embed UnimplementedInputBindingServer
 // for forward compatibility
 type InputBindingServer interface {
-	Init(context.Context, *InitRequest) (*emptypb.Empty, error)
+	Init(context.Context, *MetadataRequest) (*emptypb.Empty, error)
 	Read(context.Context, *emptypb.Empty) (*ReadResponse, error)
 	Ping(context.Context, *emptypb.Empty) (*emptypb.Empty, error)
 }
@@ -76,7 +76,7 @@ type InputBindingServer interface {
 type UnimplementedInputBindingServer struct {
 }
 
-func (UnimplementedInputBindingServer) Init(context.Context, *InitRequest) (*emptypb.Empty, error) {
+func (UnimplementedInputBindingServer) Init(context.Context, *MetadataRequest) (*emptypb.Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Init not implemented")
 }
 func (UnimplementedInputBindingServer) Read(context.Context, *emptypb.Empty) (*ReadResponse, error) {
@@ -98,7 +98,7 @@ func RegisterInputBindingServer(s grpc.ServiceRegistrar, srv InputBindingServer)
 }
 
 func _InputBinding_Init_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(InitRequest)
+	in := new(MetadataRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -110,7 +110,7 @@ func _InputBinding_Init_Handler(srv interface{}, ctx context.Context, dec func(i
 		FullMethod: "/dapr.proto.components.v1.InputBinding/Init",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(InputBindingServer).Init(ctx, req.(*InitRequest))
+		return srv.(InputBindingServer).Init(ctx, req.(*MetadataRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -179,7 +179,7 @@ var InputBinding_ServiceDesc = grpc.ServiceDesc{
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type OutputBindingClient interface {
-	Init(ctx context.Context, in *InitRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	Init(ctx context.Context, in *MetadataRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	Invoke(ctx context.Context, in *InvokeRequest, opts ...grpc.CallOption) (*InvokeResponse, error)
 	Ping(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*emptypb.Empty, error)
 }
@@ -192,7 +192,7 @@ func NewOutputBindingClient(cc grpc.ClientConnInterface) OutputBindingClient {
 	return &outputBindingClient{cc}
 }
 
-func (c *outputBindingClient) Init(ctx context.Context, in *InitRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+func (c *outputBindingClient) Init(ctx context.Context, in *MetadataRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
 	out := new(emptypb.Empty)
 	err := c.cc.Invoke(ctx, "/dapr.proto.components.v1.OutputBinding/Init", in, out, opts...)
 	if err != nil {
@@ -223,7 +223,7 @@ func (c *outputBindingClient) Ping(ctx context.Context, in *emptypb.Empty, opts 
 // All implementations should embed UnimplementedOutputBindingServer
 // for forward compatibility
 type OutputBindingServer interface {
-	Init(context.Context, *InitRequest) (*emptypb.Empty, error)
+	Init(context.Context, *MetadataRequest) (*emptypb.Empty, error)
 	Invoke(context.Context, *InvokeRequest) (*InvokeResponse, error)
 	Ping(context.Context, *emptypb.Empty) (*emptypb.Empty, error)
 }
@@ -232,7 +232,7 @@ type OutputBindingServer interface {
 type UnimplementedOutputBindingServer struct {
 }
 
-func (UnimplementedOutputBindingServer) Init(context.Context, *InitRequest) (*emptypb.Empty, error) {
+func (UnimplementedOutputBindingServer) Init(context.Context, *MetadataRequest) (*emptypb.Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Init not implemented")
 }
 func (UnimplementedOutputBindingServer) Invoke(context.Context, *InvokeRequest) (*InvokeResponse, error) {
@@ -254,7 +254,7 @@ func RegisterOutputBindingServer(s grpc.ServiceRegistrar, srv OutputBindingServe
 }
 
 func _OutputBinding_Init_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(InitRequest)
+	in := new(MetadataRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -266,7 +266,7 @@ func _OutputBinding_Init_Handler(srv interface{}, ctx context.Context, dec func(
 		FullMethod: "/dapr.proto.components.v1.OutputBinding/Init",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(OutputBindingServer).Init(ctx, req.(*InitRequest))
+		return srv.(OutputBindingServer).Init(ctx, req.(*MetadataRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }

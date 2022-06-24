@@ -20,38 +20,34 @@ import "dapr/proto/components/v1/common.proto";
 
 option go_package = "github.com/dapr/dapr/pkg/proto/components/v1;components";
 
-// Interface for input bindings
-service InputBinding {
+// Store service provides a gRPC interface for state store components.
+service PubSub {
   rpc Init(MetadataRequest) returns (google.protobuf.Empty) {}
 
-  rpc Read(google.protobuf.Empty) returns (ReadResponse) {}
+  rpc Features(google.protobuf.Empty) returns (FeaturesResponse) {}
 
-  rpc Ping(google.protobuf.Empty) returns (google.protobuf.Empty) {}
+  rpc Publish(PublishRequest) returns (google.protobuf.Empty) {}
+
+  rpc Subscribe(SubscribeRequest) returns (stream NewMessage) {}
+
 }
 
-service OutputBinding {
-  rpc Init(MetadataRequest) returns (google.protobuf.Empty) {}
-
-  rpc Invoke(InvokeRequest) returns (InvokeResponse) {}
-
-  rpc Ping(google.protobuf.Empty) returns (google.protobuf.Empty) {}
+message PublishRequest {
+  bytes data = 1; 
+  string pubsubname = 2; 
+  string topic = 3; 
+  map<string, string> metadata = 4;
+  string contenttype = 5; 
 }
 
-message ReadResponse {
-  bytes data = 1;
+message SubscribeRequest {
+  string topic = 1;
   map<string, string> metadata = 2;
-  string contenttype = 3; 
 }
 
-message InvokeRequest {
-  bytes data = 1;
-  map<string, string> metadata = 2;
-  string operation = 3; 
+message NewMessage {
+  bytes data = 1; 
+  string topic = 2; 
+  map<string, string> metadata = 3;
+  string contenttype = 4; 
 }
-
-message InvokeResponse {
-  bytes data = 1;
-  map<string, string> metadata = 2;
-  string contenttype = 3; 
-}
-
