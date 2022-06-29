@@ -1,21 +1,38 @@
 package pluggable
 
 import (
+	"github.com/dapr/dapr/pkg/components/bindings"
 	"github.com/dapr/dapr/pkg/components/pubsub"
 	"github.com/dapr/dapr/pkg/components/state"
 	"github.com/dapr/dapr/pkg/runtime"
 )
 
 type ComponentRegistry struct {
-	stateStores []StateStoreComponent
-	pubsubs     []PubSubComponent
+	stateStores    []StateStoreComponent
+	pubsubs        []PubSubComponent
+	inputBindings  []InputBindingComponent
+	outputBindings []OutputBindingComponent
 }
 
 func NewComponentRegistry() *ComponentRegistry {
 	return &ComponentRegistry{
-		stateStores: make([]StateStoreComponent, 0),
-		pubsubs:     make([]PubSubComponent, 0),
+		stateStores:    make([]StateStoreComponent, 0),
+		pubsubs:        make([]PubSubComponent, 0),
+		inputBindings:  make([]InputBindingComponent, 0),
+		outputBindings: make([]OutputBindingComponent, 0),
 	}
+}
+
+func (r *ComponentRegistry) AddInputBinding(ib InputBindingComponent) {
+	r.inputBindings = append(r.inputBindings, ib)
+}
+
+func (r *ComponentRegistry) InputBindings() []bindings.InputBinding {
+	inputs := make([]bindings.InputBinding, len(r.inputBindings))
+	for _, i := range r.inputBindings {
+		inputs = append(inputs, i.InputBinding())
+	}
+	return inputs
 }
 
 func (r *ComponentRegistry) AddStateStore(ss StateStoreComponent) {
@@ -49,6 +66,9 @@ func (r *ComponentRegistry) GenerateRuntimeOptions() []runtime.Option {
 		),
 		runtime.WithPubSubs(
 			r.PubSubs()...,
+		),
+		runtime.WithInputBindings(
+			r.InputBindings()...,
 		),
 	}
 }

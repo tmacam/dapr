@@ -1,4 +1,4 @@
-package main
+package binding
 
 import (
 	"context"
@@ -57,7 +57,7 @@ func (ob *GRPCOutputBinding) Close() error {
 }
 
 func (ob *GRPCOutputBinding) Init(metadata b.Metadata) error {
-	protoMetadata := &proto.InitRequest{
+	protoMetadata := &proto.MetadataRequest{
 		Properties: map[string]string{},
 	}
 	for k, v := range metadata.Properties {

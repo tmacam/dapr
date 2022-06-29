@@ -1,16 +1,20 @@
-package main
+package binding
 
 import (
 	"context"
 	"fmt"
+	"io"
 
 	b "github.com/dapr/components-contrib/bindings"
 	"github.com/dapr/dapr/pkg/components/bindings"
 	"github.com/dapr/dapr/pkg/components/pluggable"
 	proto "github.com/dapr/dapr/pkg/proto/components/v1"
+	"github.com/dapr/kit/logger"
 	"google.golang.org/grpc"
 	"google.golang.org/protobuf/types/known/emptypb"
 )
+
+var log = logger.NewLogger("grpcinputbinding")
 
 type GRPCInputBinding struct {
 	pluggable.GRPCComponent
@@ -57,7 +61,9 @@ func (ib *GRPCInputBinding) Close() error {
 }
 
 func (ib *GRPCInputBinding) Init(metadata b.Metadata) error {
-	protoMetadata := &proto.InitRequest{
+	log.Infof("Input binding %s initializing...", metadata.Name)
+
+	protoMetadata := &proto.MetadataRequest{
 		Properties: map[string]string{},
 	}
 	for k, v := range metadata.Properties {
@@ -74,16 +80,34 @@ func (ib *GRPCInputBinding) Ping() error {
 }
 
 func (ib *GRPCInputBinding) Read(handler func(context.Context, *b.ReadResponse) ([]byte, error)) error {
-	if result, err := ib.client.Read(context.TODO(), &emptypb.Empty{}); err != nil {
-		return fmt.Errorf("unable to read from binding: %v", err)
-	} else {
-		r := b.ReadResponse{
-			Data:     []byte{},
-			Metadata: map[string]string{},
-		}
-		r.Data = result.Data
-		r.Metadata = result.Metadata
-		handler(context.TODO(), &r)
-		return nil
+	stream, err := ib.client.Read(context.Background(), &emptypb.Empty{})
+	if err != nil {
+		return fmt.Errorf("unable to subscribe: %v", err)
 	}
+
+	streamCtx := stream.Context()
+	done := make(chan bool)
+
+	// Read messages from the topic
+	go func() error {
+		for {
+			event, err := stream.Recv()
+			if err == io.EOF {
+				close(done)
+				return nil
+			}
+			if err != nil {
+				return fmt.Errorf("failed to receive message: %v", err)
+			}
+			log.Debugf("Received message from input handler %s", ib.Name())
+			m := b.ReadResponse{
+				Data:        event.Data,
+				Metadata:    event.Metadata,
+				ContentType: &event.Contenttype,
+			}
+			handler(streamCtx, &m)
+		}
+	}()
+
+	return nil
 }

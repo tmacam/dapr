@@ -9,9 +9,12 @@ import (
 	"github.com/dapr/dapr/pkg/components/pluggable"
 	"github.com/dapr/dapr/pkg/components/pubsub"
 	proto "github.com/dapr/dapr/pkg/proto/components/v1"
+	"github.com/dapr/kit/logger"
 	"google.golang.org/grpc"
 	"google.golang.org/protobuf/types/known/emptypb"
 )
+
+var log = logger.NewLogger("grpcpubsub")
 
 type GRPCPubSub struct {
 	pluggable.GRPCComponent
@@ -122,7 +125,7 @@ func (ps *GRPCPubSub) Subscribe(req p.SubscribeRequest, handler p.Handler) error
 			if err != nil {
 				return fmt.Errorf("failed to receive message: %v", err)
 			}
-			fmt.Printf("Received message from stream on topic %s", resp.Topic)
+			log.Debugf("Received message from stream on topic %s", resp.Topic)
 			m := p.NewMessage{
 				Data:        resp.Data,
 				ContentType: &resp.Contenttype,

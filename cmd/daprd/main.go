@@ -20,8 +20,7 @@ import (
 	"syscall"
 
 	"github.com/dapr/dapr/pkg/components/pluggable"
-	pubsub2 "github.com/dapr/dapr/pkg/components/pluggable/pubsub"
-	state2 "github.com/dapr/dapr/pkg/components/pluggable/state"
+	binding2 "github.com/dapr/dapr/pkg/components/pluggable/binding"
 
 	"github.com/valyala/fasthttp"
 	"go.uber.org/automaxprocs/maxprocs"
@@ -213,17 +212,24 @@ func main() {
 		}*/
 
 	sockPath := "/home/johnewart/Temp/sockets/dotnetcomponents.sock"
-	if ss, err := state2.NewGRPCStateStore("grpcmemstore", "v1", sockPath); err != nil {
-		log.Warnf("Unable to create memory store GRPC component: %v", err)
+
+	if ib, err := binding2.NewGRPCInputBinding("grpcblackhole", "v1", sockPath); err != nil {
+		log.Warnf("Unable to create GRPC input binding: %v", err)
 	} else {
-		cr.AddStateStore(ss)
+		cr.AddInputBinding(ib)
 	}
 
-	if ps, err := pubsub2.NewGRPCPubSub("grpcpubsub", "v1", sockPath); err != nil {
-		log.Warnf("Unable to create memory pub-sub GRPC component: %v", err)
-	} else {
-		cr.AddPubSub(ps)
-	}
+	/*	if ss, err := state2.NewGRPCStateStore("grpcmemstore", "v1", sockPath); err != nil {
+			log.Warnf("Unable to create memory store GRPC component: %v", err)
+		} else {
+			cr.AddStateStore(ss)
+		}
+
+		if ps, err := pubsub2.NewGRPCPubSub("grpcpubsub", "v1", sockPath); err != nil {
+			log.Warnf("Unable to create memory pub-sub GRPC component: %v", err)
+		} else {
+			cr.AddPubSub(ps)
+		}*/
 
 	err = rt.Run(
 		runtime.WithSecretStores(

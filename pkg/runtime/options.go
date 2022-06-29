@@ -42,6 +42,10 @@ func (o *runtimeOpts) DumpToLog() {
 	for _, s := range o.pubsubs {
 		log.Debugf("  * %s", s.Name)
 	}
+	log.Debugf("Input bindings (%d)", len(o.inputBindings))
+	for _, c := range o.inputBindings {
+		log.Debugf(" * %s", c.Name)
+	}
 }
 
 // WithSecretStores adds secret store components to the runtime.
