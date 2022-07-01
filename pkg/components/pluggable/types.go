@@ -7,7 +7,16 @@ import (
 	"github.com/dapr/dapr/pkg/components/bindings"
 	"github.com/dapr/dapr/pkg/components/pubsub"
 	"github.com/dapr/dapr/pkg/components/state"
+	"github.com/dapr/kit/logger"
 )
+
+var (
+	log = logger.NewLogger("pluggable-components")
+)
+
+type GRPCComponent interface {
+	GRPCClient()
+}
 
 type DaprComponent interface {
 	Name() string

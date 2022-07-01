@@ -3,11 +3,12 @@ package pluggable
 import (
 	"context"
 	"fmt"
+	"os"
+	"path"
+
 	docker "github.com/fsouza/go-dockerclient"
 	"github.com/google/uuid"
 	"github.com/yourbase/narwhal"
-	"os"
-	"path"
 )
 
 const (
@@ -45,7 +46,7 @@ func (f *ContainerFactory) StartContainer(ctx context.Context) (*ComponentContai
 		{
 			Source: f.HostSocketRoot,
 			Target: containerSocketRoot,
-			Type: "bind",
+			Type:   "bind",
 		},
 	}
 
@@ -54,6 +55,7 @@ func (f *ContainerFactory) StartContainer(ctx context.Context) (*ComponentContai
 		Image:       f.ImageString(),
 		Environment: environment,
 		Mounts:      mounts,
+		Namespace:   fmt.Sprintf("%s", socketUUID),
 	}); err != nil {
 		return nil, fmt.Errorf("unable to create container: %v", err)
 	} else {

@@ -1,4 +1,4 @@
-package state
+package pluggable
 
 import (
 	"context"
@@ -6,19 +6,15 @@ import (
 	"io"
 
 	p "github.com/dapr/components-contrib/pubsub"
-	"github.com/dapr/dapr/pkg/components/pluggable"
 	"github.com/dapr/dapr/pkg/components/pubsub"
 	proto "github.com/dapr/dapr/pkg/proto/components/v1"
-	"github.com/dapr/kit/logger"
 	"google.golang.org/grpc"
 	"google.golang.org/protobuf/types/known/emptypb"
 )
 
-var log = logger.NewLogger("grpcpubsub")
-
 type GRPCPubSub struct {
-	pluggable.GRPCComponent
-	pluggable.PubSubComponent
+	GRPCComponent
+	PubSubComponent
 	name     string
 	version  string
 	client   proto.PubSubClient

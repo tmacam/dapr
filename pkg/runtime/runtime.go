@@ -64,6 +64,7 @@ import (
 	bindings_loader "github.com/dapr/dapr/pkg/components/bindings"
 	http_middleware_loader "github.com/dapr/dapr/pkg/components/middleware/http"
 	nr_loader "github.com/dapr/dapr/pkg/components/nameresolution"
+	"github.com/dapr/dapr/pkg/components/pluggable"
 	pubsub_loader "github.com/dapr/dapr/pkg/components/pubsub"
 	secretstores_loader "github.com/dapr/dapr/pkg/components/secretstores"
 	state_loader "github.com/dapr/dapr/pkg/components/state"
@@ -141,47 +142,48 @@ type TopicRoute struct {
 
 // DaprRuntime holds all the core components of the runtime.
 type DaprRuntime struct {
-	ctx                    context.Context
-	cancel                 context.CancelFunc
-	runtimeConfig          *Config
-	globalConfig           *config.Configuration
-	accessControlList      *config.AccessControlList
-	componentsLock         *sync.RWMutex
-	components             []components_v1alpha1.Component
-	grpc                   *grpc.Manager
-	appChannel             channel.AppChannel
-	appConfig              config.ApplicationConfig
-	directMessaging        messaging.DirectMessaging
-	stateStoreRegistry     state_loader.Registry
-	secretStoresRegistry   secretstores_loader.Registry
-	nameResolutionRegistry nr_loader.Registry
-	stateStores            map[string]state.Store
-	actor                  actors.Actors
-	bindingsRegistry       bindings_loader.Registry
-	subscribeBindingList   []string
-	inputBindings          map[string]bindings.InputBinding
-	outputBindings         map[string]bindings.OutputBinding
-	secretStores           map[string]secretstores.SecretStore
-	pubSubRegistry         pubsub_loader.Registry
-	pubSubs                map[string]pubsub.PubSub
-	nameResolver           nr.Resolver
-	httpMiddlewareRegistry http_middleware_loader.Registry
-	hostAddress            string
-	actorStateStoreName    string
-	actorStateStoreLock    *sync.RWMutex
-	authenticator          security.Authenticator
-	namespace              string
-	podName                string
-	scopedSubscriptions    map[string][]string
-	scopedPublishings      map[string][]string
-	allowedTopics          map[string][]string
-	daprHTTPAPI            http.API
-	operatorClient         operatorv1pb.OperatorClient
-	topicRoutes            map[string]TopicRoute
-	deadLetterTopics       map[string]string
-	inputBindingRoutes     map[string]string
-	shutdownC              chan error
-	apiClosers             []io.Closer
+	ctx                        context.Context
+	cancel                     context.CancelFunc
+	runtimeConfig              *Config
+	globalConfig               *config.Configuration
+	accessControlList          *config.AccessControlList
+	componentsLock             *sync.RWMutex
+	components                 []components_v1alpha1.Component
+	grpc                       *grpc.Manager
+	appChannel                 channel.AppChannel
+	appConfig                  config.ApplicationConfig
+	directMessaging            messaging.DirectMessaging
+	pluggableComponentRegistry *pluggable.ComponentRegistry
+	stateStoreRegistry         state_loader.Registry
+	secretStoresRegistry       secretstores_loader.Registry
+	nameResolutionRegistry     nr_loader.Registry
+	stateStores                map[string]state.Store
+	actor                      actors.Actors
+	bindingsRegistry           bindings_loader.Registry
+	subscribeBindingList       []string
+	inputBindings              map[string]bindings.InputBinding
+	outputBindings             map[string]bindings.OutputBinding
+	secretStores               map[string]secretstores.SecretStore
+	pubSubRegistry             pubsub_loader.Registry
+	pubSubs                    map[string]pubsub.PubSub
+	nameResolver               nr.Resolver
+	httpMiddlewareRegistry     http_middleware_loader.Registry
+	hostAddress                string
+	actorStateStoreName        string
+	actorStateStoreLock        *sync.RWMutex
+	authenticator              security.Authenticator
+	namespace                  string
+	podName                    string
+	scopedSubscriptions        map[string][]string
+	scopedPublishings          map[string][]string
+	allowedTopics              map[string][]string
+	daprHTTPAPI                http.API
+	operatorClient             operatorv1pb.OperatorClient
+	topicRoutes                map[string]TopicRoute
+	deadLetterTopics           map[string]string
+	inputBindingRoutes         map[string]string
+	shutdownC                  chan error
+	apiClosers                 []io.Closer
 
 	secretsConfiguration map[string]config.SecretsScope
 
@@ -228,26 +230,27 @@ type pubsubSubscribedMessage struct {
 func NewDaprRuntime(runtimeConfig *Config, globalConfig *config.Configuration, accessControlList *config.AccessControlList, resiliencyProvider resiliency.Provider) *DaprRuntime {
 	ctx, cancel := context.WithCancel(context.Background())
 	return &DaprRuntime{
-		ctx:                    ctx,
-		cancel:                 cancel,
-		runtimeConfig:          runtimeConfig,
-		globalConfig:           globalConfig,
-		accessControlList:      accessControlList,
-		componentsLock:         &sync.RWMutex{},
-		components:             make([]components_v1alpha1.Component, 0),
-		actorStateStoreLock:    &sync.RWMutex{},
-		grpc:                   grpc.NewGRPCManager(runtimeConfig.Mode),
-		inputBindings:          map[string]bindings.InputBinding{},
-		outputBindings:         map[string]bindings.OutputBinding{},
-		secretStores:           map[string]secretstores.SecretStore{},
-		stateStores:            map[string]state.Store{},
-		pubSubs:                map[string]pubsub.PubSub{},
-		stateStoreRegistry:     state_loader.NewRegistry(),
-		bindingsRegistry:       bindings_loader.NewRegistry(),
-		pubSubRegistry:         pubsub_loader.NewRegistry(),
-		secretStoresRegistry:   secretstores_loader.NewRegistry(),
-		nameResolutionRegistry: nr_loader.NewRegistry(),
-		httpMiddlewareRegistry: http_middleware_loader.NewRegistry(),
+		ctx:                        ctx,
+		cancel:                     cancel,
+		runtimeConfig:              runtimeConfig,
+		globalConfig:               globalConfig,
+		accessControlList:          accessControlList,
+		componentsLock:             &sync.RWMutex{},
+		components:                 make([]components_v1alpha1.Component, 0),
+		actorStateStoreLock:        &sync.RWMutex{},
+		grpc:                       grpc.NewGRPCManager(runtimeConfig.Mode),
+		inputBindings:              map[string]bindings.InputBinding{},
+		outputBindings:             map[string]bindings.OutputBinding{},
+		secretStores:               map[string]secretstores.SecretStore{},
+		stateStores:                map[string]state.Store{},
+		pubSubs:                    map[string]pubsub.PubSub{},
+		pluggableComponentRegistry: pluggable.NewComponentRegistry(),
+		stateStoreRegistry:         state_loader.NewRegistry(),
+		bindingsRegistry:           bindings_loader.NewRegistry(),
+		pubSubRegistry:             pubsub_loader.NewRegistry(),
+		secretStoresRegistry:       secretstores_loader.NewRegistry(),
+		nameResolutionRegistry:     nr_loader.NewRegistry(),
+		httpMiddlewareRegistry:     http_middleware_loader.NewRegistry(),
 
 		scopedSubscriptions: map[string][]string{},
 		scopedPublishings:   map[string][]string{},
@@ -276,6 +279,18 @@ func (a *DaprRuntime) Run(opts ...Option) error {
 	for _, opt := range opts {
 		opt(&o)
 	}
+
+	// TODO: K8s
+	a.pluggableComponentRegistry.LoadComponentsFromPath(a.runtimeConfig.Standalone.ComponentsPath)
+
+	// Register pluggable components
+	o.states = append(o.states, a.pluggableComponentRegistry.StateStores()...)
+	o.pubsubs = append(o.pubsubs, a.pluggableComponentRegistry.PubSubs()...)
+	o.inputBindings = append(o.inputBindings, a.pluggableComponentRegistry.InputBindings()...)
+
+	log.Debugf("Done registering pluggable components")
+
+	o.DumpToLog()
 
 	err := a.initRuntime(&o)
 	if err != nil {

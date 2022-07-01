@@ -1,4 +1,4 @@
-package binding
+package pluggable
 
 import (
 	"context"
@@ -7,18 +7,14 @@ import (
 
 	b "github.com/dapr/components-contrib/bindings"
 	"github.com/dapr/dapr/pkg/components/bindings"
-	"github.com/dapr/dapr/pkg/components/pluggable"
 	proto "github.com/dapr/dapr/pkg/proto/components/v1"
-	"github.com/dapr/kit/logger"
 	"google.golang.org/grpc"
 	"google.golang.org/protobuf/types/known/emptypb"
 )
 
-var log = logger.NewLogger("grpcinputbinding")
-
 type GRPCInputBinding struct {
-	pluggable.GRPCComponent
-	pluggable.InputBindingComponent
+	GRPCComponent
+	InputBindingComponent
 	name    string
 	version string
 	client  proto.InputBindingClient

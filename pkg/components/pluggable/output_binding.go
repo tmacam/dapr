@@ -1,4 +1,4 @@
-package binding
+package pluggable
 
 import (
 	"context"
@@ -6,15 +6,14 @@ import (
 
 	b "github.com/dapr/components-contrib/bindings"
 	"github.com/dapr/dapr/pkg/components/bindings"
-	"github.com/dapr/dapr/pkg/components/pluggable"
 	proto "github.com/dapr/dapr/pkg/proto/components/v1"
 	"google.golang.org/grpc"
 	"google.golang.org/protobuf/types/known/emptypb"
 )
 
 type GRPCOutputBinding struct {
-	pluggable.GRPCComponent
-	pluggable.OutputBindingComponent
+	GRPCComponent
+	OutputBindingComponent
 	name    string
 	version string
 	client  proto.OutputBindingClient
