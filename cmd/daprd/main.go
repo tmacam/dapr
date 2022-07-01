@@ -171,63 +171,6 @@ func main() {
 		log.Fatal(err)
 	}
 
-	/*
-		cr := pluggable.NewComponentRegistry()
-		rt.RegisterPluggableComponents()
-			cf := pluggable.ContainerFactory{
-				Image:          "dapr-memstore",
-				Version:        "latest",
-				HostSocketRoot: "/home/johnewart/Temp/sockets",
-			}
-			if container, err := cf.StartContainer(context.TODO()); err != nil {
-				log.Warnf("Unable to create container: %v", err)
-			} else {
-				time.Sleep(30 * time.Second)
-
-				if ss, err := state2.NewGRPCStateStore("grpcmemstore", "v1", container.HostSocketPath); err != nil {
-					log.Warnf("Unable to create memory store GRPC component: %v", err)
-				} else {
-					cr.AddStateStore(ss)
-				}
-			}
-
-			cf = pluggable.ContainerFactory{
-				Image:          "dapr-net-pubsub",
-				Version:        "latest",
-				HostSocketRoot: "/home/johnewart/Temp/sockets",
-			}
-			if container, err := cf.StartContainer(context.TODO()); err != nil {
-				log.Warnf("Unable to create container: %v", err)
-			} else {
-				time.Sleep(30 * time.Second)
-
-				if ps, err := pubsub2.NewGRPCPubSub("grpcpubsub", "v1", container.HostSocketPath); err != nil {
-					log.Warnf("Unable to create .NET pubsub GRPC component: %v", err)
-				} else {
-					cr.AddPubSub(ps)
-				}
-			}
-
-		sockPath := "/home/johnewart/Temp/sockets/dotnetcomponents.sock"
-
-		if ib, err := binding2.NewGRPCInputBinding("grpcblackhole", "v1", sockPath); err != nil {
-			log.Warnf("Unable to create GRPC input binding: %v", err)
-		} else {
-			cr.AddInputBinding(ib)
-		}
-
-		/*	if ss, err := state2.NewGRPCStateStore("grpcmemstore", "v1", sockPath); err != nil {
-				log.Warnf("Unable to create memory store GRPC component: %v", err)
-			} else {
-				cr.AddStateStore(ss)
-			}
-
-			if ps, err := pubsub2.NewGRPCPubSub("grpcpubsub", "v1", sockPath); err != nil {
-				log.Warnf("Unable to create memory pub-sub GRPC component: %v", err)
-			} else {
-				cr.AddPubSub(ps)
-			}*/
-
 	err = rt.Run(
 		runtime.WithSecretStores(
 			secretstores_loader.New("kubernetes", func() secretstores.SecretStore {

@@ -110,12 +110,33 @@ func (r *ComponentRegistry) RegisterPluggableComponent(pc components_v1alpha1.Pl
 
 	if socketPath != "" {
 		log.Debugf("Using UNIX socket located at %s for pluggable component %s/%s", pc.Spec.SocketPath, pc.Name, pc.Spec.Version)
-		if ss, err := NewGRPCStateStore(pc.Name, pc.Spec.Version, socketPath); err != nil {
-			log.Warnf("Unable to create store GRPC component '%s': %v", err)
-			return err
-		} else {
-			log.Debugf("Registered state store %s/%s", pc.Name, pc.Spec.Version)
-			r.AddStateStore(ss)
+
+		switch pc.Spec.Type {
+		case "state":
+			if ss, err := NewGRPCStateStore(pc.Name, pc.Spec.Version, socketPath); err != nil {
+				log.Warnf("Unable to create store GRPC component '%s': %v", err)
+				return err
+			} else {
+				log.Debugf("Registered state store %s/%s", pc.Name, pc.Spec.Version)
+				r.AddStateStore(ss)
+			}
+		case "pubsub":
+			if ps, err := NewGRPCPubSub(pc.Name, pc.Spec.Version, socketPath); err != nil {
+				log.Warnf("Unable to create GRPC pubsub component '%s': %v", err)
+				return err
+			} else {
+				log.Debugf("Registering pubsub %s/%s", pc.Name, pc.Spec.Version)
+				r.AddPubSub(ps)
+			}
+		case "inputbinding":
+			if ib, err := NewGRPCInputBinding(pc.Name, pc.Spec.Version, socketPath); err != nil {
+				log.Warnf("Unable to create GRPC input binding component '%s': %v", err)
+				return err
+			} else {
+				log.Debugf("Registering input binding %s/%s", pc.Name, pc.Spec.Version)
+				r.AddInputBinding(ib)
+			}
+
 		}
 	}
 
