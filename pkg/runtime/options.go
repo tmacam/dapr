@@ -46,6 +46,10 @@ func (o *runtimeOpts) DumpToLog() {
 	for _, c := range o.inputBindings {
 		log.Debugf(" * %s", c.Name)
 	}
+	log.Debugf("HTTP middleware (%d)", len(o.httpMiddleware))
+	for _, c := range o.httpMiddleware {
+		log.Debugf(" * %s", c.Name)
+	}
 }
 
 // WithSecretStores adds secret store components to the runtime.

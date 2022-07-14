@@ -287,6 +287,7 @@ func (a *DaprRuntime) Run(opts ...Option) error {
 	o.states = append(o.states, a.pluggableComponentRegistry.StateStores()...)
 	o.pubsubs = append(o.pubsubs, a.pluggableComponentRegistry.PubSubs()...)
 	o.inputBindings = append(o.inputBindings, a.pluggableComponentRegistry.InputBindings()...)
+	o.httpMiddleware = append(o.httpMiddleware, a.pluggableComponentRegistry.HttpMiddlewareHandlers()...)
 
 	log.Debugf("Done registering pluggable components")
 

@@ -24,7 +24,7 @@ const _ = grpc.SupportPackageIsVersion7
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type InputBindingClient interface {
 	Init(ctx context.Context, in *MetadataRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
-	Read(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*ReadResponse, error)
+	Read(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (InputBinding_ReadClient, error)
 	Ping(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*emptypb.Empty, error)
 }
 
@@ -45,13 +45,36 @@ func (c *inputBindingClient) Init(ctx context.Context, in *MetadataRequest, opts
 	return out, nil
 }
 
-func (c *inputBindingClient) Read(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*ReadResponse, error) {
-	out := new(ReadResponse)
-	err := c.cc.Invoke(ctx, "/dapr.proto.components.v1.InputBinding/Read", in, out, opts...)
+func (c *inputBindingClient) Read(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (InputBinding_ReadClient, error) {
+	stream, err := c.cc.NewStream(ctx, &InputBinding_ServiceDesc.Streams[0], "/dapr.proto.components.v1.InputBinding/Read", opts...)
 	if err != nil {
 		return nil, err
 	}
-	return out, nil
+	x := &inputBindingReadClient{stream}
+	if err := x.ClientStream.SendMsg(in); err != nil {
+		return nil, err
+	}
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	return x, nil
+}
+
+type InputBinding_ReadClient interface {
+	Recv() (*ReadResponse, error)
+	grpc.ClientStream
+}
+
+type inputBindingReadClient struct {
+	grpc.ClientStream
+}
+
+func (x *inputBindingReadClient) Recv() (*ReadResponse, error) {
+	m := new(ReadResponse)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
 }
 
 func (c *inputBindingClient) Ping(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*emptypb.Empty, error) {
@@ -68,7 +91,7 @@ func (c *inputBindingClient) Ping(ctx context.Context, in *emptypb.Empty, opts .
 // for forward compatibility
 type InputBindingServer interface {
 	Init(context.Context, *MetadataRequest) (*emptypb.Empty, error)
-	Read(context.Context, *emptypb.Empty) (*ReadResponse, error)
+	Read(*emptypb.Empty, InputBinding_ReadServer) error
 	Ping(context.Context, *emptypb.Empty) (*emptypb.Empty, error)
 }
 
@@ -79,8 +102,8 @@ type UnimplementedInputBindingServer struct {
 func (UnimplementedInputBindingServer) Init(context.Context, *MetadataRequest) (*emptypb.Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Init not implemented")
 }
-func (UnimplementedInputBindingServer) Read(context.Context, *emptypb.Empty) (*ReadResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Read not implemented")
+func (UnimplementedInputBindingServer) Read(*emptypb.Empty, InputBinding_ReadServer) error {
+	return status.Errorf(codes.Unimplemented, "method Read not implemented")
 }
 func (UnimplementedInputBindingServer) Ping(context.Context, *emptypb.Empty) (*emptypb.Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Ping not implemented")
@@ -115,22 +138,25 @@ func _InputBinding_Init_Handler(srv interface{}, ctx context.Context, dec func(i
 	return interceptor(ctx, in, info, handler)
 }
 
-func _InputBinding_Read_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(emptypb.Empty)
-	if err := dec(in); err != nil {
-		return nil, err
+func _InputBinding_Read_Handler(srv interface{}, stream grpc.ServerStream) error {
+	m := new(emptypb.Empty)
+	if err := stream.RecvMsg(m); err != nil {
+		return err
 	}
-	if interceptor == nil {
-		return srv.(InputBindingServer).Read(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/dapr.proto.components.v1.InputBinding/Read",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(InputBindingServer).Read(ctx, req.(*emptypb.Empty))
-	}
-	return interceptor(ctx, in, info, handler)
+	return srv.(InputBindingServer).Read(m, &inputBindingReadServer{stream})
+}
+
+type InputBinding_ReadServer interface {
+	Send(*ReadResponse) error
+	grpc.ServerStream
+}
+
+type inputBindingReadServer struct {
+	grpc.ServerStream
+}
+
+func (x *inputBindingReadServer) Send(m *ReadResponse) error {
+	return x.ServerStream.SendMsg(m)
 }
 
 func _InputBinding_Ping_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
@@ -163,15 +189,17 @@ var InputBinding_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _InputBinding_Init_Handler,
 		},
 		{
-			MethodName: "Read",
-			Handler:    _InputBinding_Read_Handler,
-		},
-		{
 			MethodName: "Ping",
 			Handler:    _InputBinding_Ping_Handler,
 		},
 	},
-	Streams:  []grpc.StreamDesc{},
+	Streams: []grpc.StreamDesc{
+		{
+			StreamName:    "Read",
+			Handler:       _InputBinding_Read_Handler,
+			ServerStreams: true,
+		},
+	},
 	Metadata: "dapr/proto/components/v1/binding.proto",
 }
 

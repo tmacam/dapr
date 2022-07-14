@@ -15,6 +15,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/dapr/dapr/pkg/components/bindings"
+	"github.com/dapr/dapr/pkg/components/middleware/http"
 	"github.com/dapr/dapr/pkg/components/pubsub"
 	"github.com/dapr/dapr/pkg/components/state"
 )
@@ -24,6 +25,7 @@ type ComponentRegistry struct {
 	pubsubs        []PubSubComponent
 	inputBindings  []InputBindingComponent
 	outputBindings []OutputBindingComponent
+	httpMiddleware []HttpMiddlewareComponent
 }
 
 func NewComponentRegistry() *ComponentRegistry {
@@ -32,7 +34,20 @@ func NewComponentRegistry() *ComponentRegistry {
 		pubsubs:        make([]PubSubComponent, 0),
 		inputBindings:  make([]InputBindingComponent, 0),
 		outputBindings: make([]OutputBindingComponent, 0),
+		httpMiddleware: make([]HttpMiddlewareComponent, 0),
 	}
+}
+
+func (r *ComponentRegistry) AddHttpMiddleware(m HttpMiddlewareComponent) {
+	r.httpMiddleware = append(r.httpMiddleware, m)
+}
+
+func (r *ComponentRegistry) HttpMiddlewareHandlers() []http.Middleware {
+	middlewares := make([]http.Middleware, len(r.httpMiddleware))
+	for _, m := range r.httpMiddleware {
+		middlewares = append(middlewares, m.HttpMiddleware())
+	}
+	return middlewares
 }
 
 func (r *ComponentRegistry) AddInputBinding(ib InputBindingComponent) {
@@ -109,12 +124,12 @@ func (r *ComponentRegistry) RegisterPluggableComponent(pc components_v1alpha1.Pl
 	}
 
 	if socketPath != "" {
-		log.Debugf("Using UNIX socket located at %s for pluggable component %s/%s", pc.Spec.SocketPath, pc.Name, pc.Spec.Version)
+		log.Debugf("Using UNIX socket located at %s for pluggable component %s/%s", socketPath, pc.Name, pc.Spec.Version)
 
 		switch pc.Spec.Type {
 		case "state":
 			if ss, err := NewGRPCStateStore(pc.Name, pc.Spec.Version, socketPath); err != nil {
-				log.Warnf("Unable to create store GRPC component '%s': %v", err)
+				log.Warnf("Unable to create store GRPC component '%s': %v", pc.Name, err)
 				return err
 			} else {
 				log.Debugf("Registered state store %s/%s", pc.Name, pc.Spec.Version)
@@ -122,7 +137,7 @@ func (r *ComponentRegistry) RegisterPluggableComponent(pc components_v1alpha1.Pl
 			}
 		case "pubsub":
 			if ps, err := NewGRPCPubSub(pc.Name, pc.Spec.Version, socketPath); err != nil {
-				log.Warnf("Unable to create GRPC pubsub component '%s': %v", err)
+				log.Warnf("Unable to create GRPC pubsub component '%s': %v", pc.Name, err)
 				return err
 			} else {
 				log.Debugf("Registering pubsub %s/%s", pc.Name, pc.Spec.Version)
@@ -130,11 +145,18 @@ func (r *ComponentRegistry) RegisterPluggableComponent(pc components_v1alpha1.Pl
 			}
 		case "inputbinding":
 			if ib, err := NewGRPCInputBinding(pc.Name, pc.Spec.Version, socketPath); err != nil {
-				log.Warnf("Unable to create GRPC input binding component '%s': %v", err)
+				log.Warnf("Unable to create GRPC input binding component '%s': %v", pc.Name, err)
 				return err
 			} else {
 				log.Debugf("Registering input binding %s/%s", pc.Name, pc.Spec.Version)
 				r.AddInputBinding(ib)
+			}
+		case "middleware.http":
+			if m, err := NewGRPCHttpMiddleware(pc.Name, pc.Spec.Version, socketPath); err != nil {
+				log.Warn("Unable to create GRPC HTTP middleware component: '%s': %v", pc.Name, err)
+			} else {
+				log.Debugf("Registering HTTP middleware %s/%s", pc.Name, pc.Spec.Version)
+				r.AddHttpMiddleware(m)
 			}
 
 		}
