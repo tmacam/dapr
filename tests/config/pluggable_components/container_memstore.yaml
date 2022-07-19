@@ -1,0 +1,18 @@
+apiVersion: dapr.io/v1alpha1
+kind: PluggableComponent
+metadata:
+  name: memstore
+spec:
+  type: state
+  version: v1
+  container:
+    image: johnewart/dapr-memstore-go
+    version: latest
+---
+apiVersion: dapr.io/v1alpha1
+kind: Component
+metadata:
+  name: pluggablestate
+spec:
+  type: state.memstore
+  version: v1
